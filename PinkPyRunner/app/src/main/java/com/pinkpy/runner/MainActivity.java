@@ -23,7 +23,8 @@ import com.chaquo.python.Python;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.util.UUID;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,8 +51,11 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle state) {
         super.onCreate(state);
         executor = Executors.newSingleThreadExecutor();
+        ensurePysFolder();
         buildUi();
-        appendConsole("PinkPy Runner ready. Select a .py file to begin.\n");
+        appendConsole("PinkPy Runner ready.\n");
+        appendConsole("Drop Python files into: " + getPysFolder().getAbsolutePath() + "\n");
+        refreshPysFolder();
     }
 
     private void buildUi() {
@@ -81,6 +85,21 @@ public class MainActivity extends Activity {
         Button selectButton = makeButton("SELECT A PY FILE", PINK, Color.WHITE);
         root.addView(selectButton, new LinearLayout.LayoutParams(-1, dp(56)));
         selectButton.setOnClickListener(v -> openPicker());
+
+        Button folderButton = makeButton("BROWSE PYS FOLDER", Color.rgb(105, 48, 83), Color.WHITE);
+        LinearLayout.LayoutParams folderButtonParams = new LinearLayout.LayoutParams(-1, dp(46));
+        folderButtonParams.topMargin = dp(8);
+        root.addView(folderButton, folderButtonParams);
+        folderButton.setOnClickListener(v -> showPysFiles());
+
+        TextView folderHint = new TextView(this);
+        folderHint.setText("Put .py files in: Android/data/com.pinkpy.runner/files/pys");
+        folderHint.setTextColor(Color.rgb(190, 150, 180));
+        folderHint.setTextSize(10);
+        folderHint.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams folderHintParams = new LinearLayout.LayoutParams(-1, dp(24));
+        folderHintParams.topMargin = dp(3);
+        root.addView(folderHint, folderHintParams);
 
         selectedLabel = new TextView(this);
         selectedLabel.setText("No file selected");
@@ -205,9 +224,9 @@ public class MainActivity extends Activity {
             return;
         }
         try {
-            File folder = new File(getFilesDir(), "selected_scripts");
-            if (!folder.exists() && !folder.mkdirs()) throw new java.io.IOException("Cannot create script folder");
-            selectedScript = new File(folder, UUID.randomUUID().toString() + ".py");
+            File folder = getPysFolder();
+            if (!folder.exists() && !folder.mkdirs()) throw new java.io.IOException("Cannot create pys folder");
+            selectedScript = new File(folder, name);
             try (InputStream input = getContentResolver().openInputStream(uri);
                  FileOutputStream output = new FileOutputStream(selectedScript)) {
                 if (input == null) throw new java.io.IOException("Unable to open selected file");
@@ -217,12 +236,60 @@ public class MainActivity extends Activity {
             }
             selectedLabel.setText(name);
             statusLabel.setText("●  FILE READY");
-            appendConsole("\n[PinkPy] Selected: " + name + "\n");
+            appendConsole("\n[PinkPy] Copied into pys/: " + name + "\n");
+            refreshPysFolder();
         } catch (Exception error) {
             selectedScript = null;
             appendConsole("[File error] " + error + "\n");
             Toast.makeText(this, "Could not read that file", Toast.LENGTH_LONG).show();
         }
+    }
+
+
+    // User-accessible app-specific folder: Android/data/<package>/files/pys
+    private File getPysFolder() {
+        File base = getExternalFilesDir(null);
+        if (base == null) base = getFilesDir();
+        return new File(base, "pys");
+    }
+
+    private void ensurePysFolder() {
+        File folder = getPysFolder();
+        if (!folder.exists()) folder.mkdirs();
+    }
+
+    private void refreshPysFolder() {
+        File folder = getPysFolder();
+        if (!folder.exists()) folder.mkdirs();
+        File[] files = folder.listFiles((dir, name) ->
+                name != null && name.toLowerCase(java.util.Locale.ROOT).endsWith(".py"));
+        int count = files == null ? 0 : files.length;
+        appendConsole("[PinkPy] pys/ contains " + count + " Python file(s).\n");
+    }
+
+    private void showPysFiles() {
+        File folder = getPysFolder();
+        if (!folder.exists()) folder.mkdirs();
+        File[] files = folder.listFiles((dir, name) ->
+                name != null && name.toLowerCase(java.util.Locale.ROOT).endsWith(".py"));
+        if (files == null || files.length == 0) {
+            Toast.makeText(this, "No .py files found in pys folder", Toast.LENGTH_LONG).show();
+            appendConsole("[PinkPy] No .py files in " + folder.getAbsolutePath() + "\n");
+            return;
+        }
+        Arrays.sort(files, Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
+        String[] names = new String[files.length];
+        for (int i = 0; i < files.length; i++) names[i] = files[i].getName();
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Choose a script from pys/")
+                .setItems(names, (dialog, which) -> {
+                    selectedScript = files[which];
+                    selectedLabel.setText(selectedScript.getName());
+                    statusLabel.setText("●  FILE READY");
+                    appendConsole("[PinkPy] Selected from pys/: " + selectedScript.getName() + "\n");
+                })
+                .setNegativeButton("CANCEL", null)
+                .show();
     }
 
     private String getDisplayName(Uri uri) {
