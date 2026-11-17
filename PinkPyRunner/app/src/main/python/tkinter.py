@@ -103,3 +103,44 @@ class _MessageBox:
     def askyesno(title, message): AndroidTk.showMessage(str(title), str(message)); return True
 
 messagebox = _MessageBox()
+
+class Combobox(Widget):
+    kind = "label"
+    def __init__(self, master=None, **kwargs):
+        self.values = list(kwargs.get("values", []))
+        self.state = kwargs.get("state", "readonly")
+        super().__init__(master, **kwargs)
+        if self.values and not self.value:
+            self.value = self.values[0]
+        self.text = str(self.value)
+    def current(self, index=None):
+        if index is None:
+            try: return self.values.index(self.get())
+            except ValueError: return -1
+        if 0 <= int(index) < len(self.values):
+            self._set_value(self.values[int(index)])
+    def set(self, value): self._set_value(value)
+    def bind(self, sequence, callback): return None
+
+class Style:
+    def __init__(self, *a, **k): pass
+    def theme_use(self, *a): pass
+    def configure(self, *a, **k): pass
+    def map(self, *a, **k): pass
+
+class Separator(Widget): kind = "label"
+class Progressbar(Widget): kind = "label"
+class _TTK:
+    Frame = Frame
+    Label = Label
+    Button = Button
+    Entry = Entry
+    Checkbutton = Checkbutton
+    Radiobutton = Radiobutton
+    Scale = Scale
+    Combobox = Combobox
+    Separator = Separator
+    Progressbar = Progressbar
+    Style = Style
+
+ttk = _TTK()
