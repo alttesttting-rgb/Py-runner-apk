@@ -1,13 +1,14 @@
 name: Build APK
 
 on:
-  push:
-    branches: [ main, master ]
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,18 +24,36 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Unzip project
+        run: |
+          echo "Looking for zip..."
+          ls -la
+          unzip -o pyrunner.zip -d extracted
+          echo "Contents of extracted:"
+          ls -la extracted
+          # Move everything to the root
+          if [ -d extracted/PyRunner ]; then
+            cp -r extracted/PyRunner/* .
+          elif [ -d extracted/app ]; then
+            cp -r extracted/* .
+          else
+            cp -r extracted/* .
+          fi
+          echo "Root after copy:"
+          ls -la
+
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Create Gradle wrapper if missing
         run: |
           if [ ! -f gradlew ]; then
-            gradle wrapper --gradle-version 8.9
+            gradle wrapper --gradle-version 8.4
             chmod +x gradlew
           fi
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
