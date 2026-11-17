@@ -30,19 +30,19 @@ def run_script(script_path, sink, control):
         sys.argv = [script_path]
         sys.stdout = stream
         sys.stderr = stream
-        sink.onOutput("[PinkPy] Starting script...\\n")
+        sink.onOutput("[PinkPy] Starting script...\n")
         with open(script_path, "r", encoding="utf-8-sig") as source:
             source_text = source.read()
         code = compile(source_text, script_path, "exec")
         namespace = {"__name__": "__main__", "__file__": script_path, "__package__": None}
         sys.settrace(stop_trace)
         exec(code, namespace, namespace)
-        sink.onOutput("\\n[PinkPy] Script finished.\\n")
+        sink.onOutput("\n[PinkPy] Script finished.\n")
     except KeyboardInterrupt:
-        sink.onOutput("\\n[PinkPy] Script stopped.\\n")
+        sink.onOutput("\n[PinkPy] Script stopped.\n")
     except BaseException:
         traceback.print_exc(file=stream)
-        sink.onOutput("\\n[PinkPy] Script failed. See error above.\\n")
+        sink.onOutput("\n[PinkPy] Script failed. See error above.\n")
     finally:
         sys.settrace(None)
         sys.stdout, sys.stderr = old_stdout, old_stderr
