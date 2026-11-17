@@ -51,6 +51,7 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle state) {
         super.onCreate(state);
         executor = Executors.newSingleThreadExecutor();
+        AndroidTk.attach(this);
         ensurePysFolder();
         buildUi();
         appendConsole("PinkPy Runner ready.\n");
