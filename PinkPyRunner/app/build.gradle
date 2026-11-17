@@ -11,8 +11,8 @@ android {
         applicationId 'com.pinkpy.runner'
         minSdk 24
         targetSdk 35
-        versionCode 1
-        versionName '1.0'
+        versionCode 2
+        versionName '1.1'
         ndk {
             abiFilters 'arm64-v8a'
         }
@@ -27,5 +27,17 @@ android {
 chaquopy {
     defaultConfig {
         version = '3.13'
+        pip {
+            install 'requests'
+            install 'httpx'
+            install 'beautifulsoup4'
+            install 'certifi'
+            install 'urllib3'
+            install 'python-dateutil'
+            install 'pytz'
+            install 'PyYAML'
+            install 'websocket-client'
+            install 'typing-extensions'
+        }
     }
 }
