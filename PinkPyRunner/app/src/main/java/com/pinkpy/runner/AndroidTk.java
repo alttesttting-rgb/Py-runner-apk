@@ -108,6 +108,6 @@ public final class AndroidTk {
         try { return o.get(key).toBoolean(); } catch (Throwable e) { return false; }
     }
     private static void call(PyObject o, String key) {
-        try { PyObject fn = o.get(key); if (fn != null && !fn.isNone()) fn.call(); } catch (Throwable ignored) {}
+        try { PyObject fn = o.get(key); if (fn != null && !"None".equals(fn.toString())) fn.call(); } catch (Throwable ignored) {}
     }
 }
